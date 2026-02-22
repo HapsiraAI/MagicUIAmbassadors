@@ -1,4 +1,10 @@
+﻿"use client"
+
+import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
+
 import { docsConfig } from "@/config/docs"
+import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { CommandMenu } from "@/components/command-menu"
 import { DiscordLink } from "@/components/discord-link"
@@ -9,8 +15,31 @@ import { MobileNav } from "@/components/mobile-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 
 export function SiteHeader() {
+  const pathname = usePathname()
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => {
+      setIsScrolled(window.scrollY > 32)
+    }
+
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+    }
+  }, [])
+
+  const isAmbassadorsPage = pathname === "/ambassadors"
+  const transparentHeader = isAmbassadorsPage && !isScrolled
+
   return (
-    <header className="bg-background sticky top-0 z-50 w-full">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full transition-colors duration-300",
+        transparentHeader ? "bg-transparent" : "bg-background/95 backdrop-blur"
+      )}
+    >
       <div className="container-wrapper 3xl:fixed:px-0 px-6">
         <div className="3xl:fixed:container flex h-(--header-height) items-center gap-2 **:data-[slot=separator]:!h-4">
           <MobileNav className="flex lg:hidden" />

@@ -1,4 +1,6 @@
-import * as React from "react"
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
@@ -13,6 +15,36 @@ import {
 import { Icons } from "@/components/icons"
 
 export function GitHubLink({ className }: { className?: string }) {
+  const [stars, setStars] = useState<number | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadStars = async () => {
+      try {
+        const response = await fetch(
+          "https://api.github.com/repos/magicuidesign/magicui"
+        )
+        const json = await response.json()
+        if (!isMounted) {
+          return
+        }
+        const starCount = Number(json.stargazers_count)
+        setStars(Number.isFinite(starCount) ? starCount : 0)
+      } catch {
+        if (isMounted) {
+          setStars(0)
+        }
+      }
+    }
+
+    loadStars()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -25,9 +57,11 @@ export function GitHubLink({ className }: { className?: string }) {
               className={className}
             >
               <Icons.gitHub />
-              <React.Suspense fallback={<Skeleton className="h-4 w-8" />}>
-                <StarsCount />
-              </React.Suspense>
+              {stars === null ? (
+                <Skeleton className="h-4 w-8" />
+              ) : (
+                <StarsCount stars={stars} />
+              )}
             </Link>
           </Button>
         </TooltipTrigger>
@@ -39,24 +73,14 @@ export function GitHubLink({ className }: { className?: string }) {
   )
 }
 
-export async function StarsCount() {
-  const data = await fetch(
-    "https://api.github.com/repos/magicuidesign/magicui",
-    {
-      next: { revalidate: 86400 }, // Cache for 1 day (86400 seconds)
-    }
-  )
-  const json = await data.json()
-
+export function StarsCount({ stars }: { stars: number }) {
   return (
     <span className="text-muted-foreground w-8 text-xs tabular-nums">
-      <span className="hidden sm:inline">
-        {json.stargazers_count.toLocaleString()}
-      </span>
+      <span className="hidden sm:inline">{stars.toLocaleString()}</span>
       <span className="sm:hidden">
-        {json.stargazers_count >= 1000
-          ? `${(json.stargazers_count / 1000).toFixed(1)}k`
-          : json.stargazers_count.toLocaleString()}
+        {stars >= 1000
+          ? `${(stars / 1000).toFixed(1)}k`
+          : stars.toLocaleString()}
       </span>
     </span>
   )

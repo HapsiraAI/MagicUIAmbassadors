@@ -1,4 +1,4 @@
-import { NavItem, NavItemWithChildren } from "@/types"
+﻿import { NavItem, NavItemWithChildren } from "@/types"
 
 interface DocsConfig {
   mainNav: NavItem[]
@@ -20,6 +20,10 @@ export const docsConfig: DocsConfig = {
     {
       title: "Showcase",
       href: "/showcase",
+    },
+    {
+      title: "Ambassadors",
+      href: "/ambassadors",
     },
   ],
   sidebarNav: [

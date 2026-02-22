@@ -6,17 +6,22 @@ import posthog from "posthog-js"
 import { PostHogProvider } from "posthog-js/react"
 
 if (typeof window !== "undefined") {
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_API_KEY!, {
-    api_host: "https://app.posthog.com",
-    capture_pageview: true,
-    session_recording: {
-      maskAllInputs: false,
-    },
-    // Enable debug mode in development
-    loaded: (posthog) => {
-      if (process.env.NODE_ENV === "development") posthog.debug()
-    },
-  })
+  const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_API_KEY
+  if (posthogApiKey && posthogApiKey.trim().length > 0) {
+    posthog.init(posthogApiKey, {
+      api_host: "https://app.posthog.com",
+      capture_pageview: true,
+      session_recording: {
+        maskAllInputs: false,
+      },
+      // Enable debug mode in development
+      loaded: (posthogInstance) => {
+        if (process.env.NODE_ENV === "development") {
+          posthogInstance.debug()
+        }
+      },
+    })
+  }
 }
 
 export function PostHogPageview(): React.ReactNode {

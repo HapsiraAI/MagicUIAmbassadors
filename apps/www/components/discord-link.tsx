@@ -1,4 +1,6 @@
-import * as React from "react"
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 
 import { siteConfig } from "@/config/site"
@@ -14,6 +16,36 @@ import { Icons } from "@/components/icons"
 import { PingDot } from "@/components/ping-dot"
 
 export function DiscordLink({ className }: { className?: string }) {
+  const [members, setMembers] = useState<number | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadMembers = async () => {
+      try {
+        const response = await fetch(
+          "https://discord.com/api/guilds/1151315619246002176/widget.json"
+        )
+        const json = await response.json()
+        if (!isMounted) {
+          return
+        }
+        const count = Number(json.presence_count)
+        setMembers(Number.isFinite(count) ? count : 0)
+      } catch {
+        if (isMounted) {
+          setMembers(0)
+        }
+      }
+    }
+
+    loadMembers()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -28,43 +60,44 @@ export function DiscordLink({ className }: { className?: string }) {
           rel="noreferrer"
         >
           <Icons.discord />
-          <React.Suspense fallback={<Skeleton className="h-4 w-8" />}>
-            <ActiveMembersCount className="text-muted-foreground" />
-          </React.Suspense>
+          {members === null ? (
+            <Skeleton className="h-4 w-8" />
+          ) : (
+            <ActiveMembersCount
+              className="text-muted-foreground"
+              members={members}
+            />
+          )}
         </Link>
       </TooltipTrigger>
       <TooltipContent>
-        <React.Suspense fallback={<Skeleton className="h-4 w-8" />}>
+        {members === null ? (
+          <Skeleton className="h-4 w-8" />
+        ) : (
           <span>
-            <ActiveMembersCount className="text-background" /> members online in
-            our Discord community
+            <ActiveMembersCount className="text-background" members={members} />{" "}
+            members online in our Discord community
           </span>
-        </React.Suspense>
+        )}
       </TooltipContent>
     </Tooltip>
   )
 }
 
-export async function ActiveMembersCount({
+export function ActiveMembersCount({
   className,
+  members,
 }: {
   className?: string
+  members: number
 }) {
-  const data = await fetch(
-    "https://discord.com/api/guilds/1151315619246002176/widget.json",
-    {
-      next: { revalidate: 3600 }, // Cache for 1 hour (3600 seconds)
-    }
-  )
-  const json = await data.json()
-
   return (
     <div className={cn("ml-2 inline-flex items-center gap-1", className)}>
       <PingDot />
       <span className="min-w-[2rem] text-xs font-medium tabular-nums">
-        {json.presence_count >= 1000
-          ? `${(json.presence_count / 1000).toFixed(1)}k`
-          : json.presence_count.toLocaleString()}
+        {members >= 1000
+          ? `${(members / 1000).toFixed(1)}k`
+          : members.toLocaleString()}
       </span>
     </div>
   )
